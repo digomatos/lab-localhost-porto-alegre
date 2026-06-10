@@ -1,22 +1,22 @@
-# Scenario 1 — Ship It & Harden It (~35 min)
+# Cenario 1 — Publicar e Fortalecer (~35 min)
 
-AI can scaffold your Azure deployment in minutes. But would you push AI-generated Bicep to production without reviewing it?
+A IA pode montar seu deployment no Azure em minutos. Mas voce subiria Bicep gerado por IA para producao sem revisar?
 
-## Part A — Ship It (~25 min)
+## Parte A — Publicar (~25 min)
 
-> 💡 **Make sure your app is NOT currently running.** If you started `python app.py` during the checkpoint, stop it with **Ctrl+C** before proceeding.
+> 💡 **Garanta que seu app NAO esta em execucao.** Se voce iniciou `python app.py` durante o checkpoint, pare com **Ctrl+C** antes de continuar.
 
-If you're not already in the **lego-set-browser** directory, cd into it, then use the prompt below to start a Copilot session in **yolo mode**.
+Se voce ainda nao estiver no diretorio **lego-set-browser**, entre nele e use o prompt abaixo para iniciar uma sessao do Copilot em **modo yolo**.
 
 ```
 copilot --yolo
 ```
 
-The `--yolo` flag auto-approves commands and skips confirmation prompts — safe here because the lab runs in a sandboxed environment, and it can save you several minutes over the course of the lab. Then, say to Copilot:
+A flag `--yolo` aprova comandos automaticamente e ignora prompts de confirmacao — seguro aqui porque o lab roda em ambiente sandbox e pode economizar varios minutos ao longo do exercicio. Em seguida, diga ao Copilot:
 
 ```
   Create and deploy 2 Azure services 
-   	
+   
    **Environment:**
    - Subscription: Current subscription
    - Create a new resource group: rg-lego-set-browser-dev
@@ -37,91 +37,91 @@ The `--yolo` flag auto-approves commands and skips confirmation prompts — safe
    - System-assigned managed identity for Cosmos DB (Built-in Data Reader)
 ```
 
-This single prompt triggers a **three-skill chain** — watch Copilot invoke each one:
+Este unico prompt aciona uma **cadeia de 3 skills** — observe o Copilot invocar cada uma:
 
-### 1️⃣ `azure-prepare` activates first
+### 1️⃣ `azure-prepare` ativa primeiro
 
-Watch how it handles **two very different starting points** in a single pass — this is the key insight of this step:
+Observe como ele lida com **dois pontos de partida bem diferentes** em uma unica passada — este e o insight principal deste passo:
 
-- **Flask app → Container Apps (starting point: existing source code in your workspace):**
-  - Scans your workspace — finds `requirements.txt` and `app.py`, classifies it as a Python Flask web app
-  - Chooses Container Apps as the hosting target (do you agree with that choice over App Service or Functions?)
-  - Reviews the existing `Dockerfile` (the app already has one — watch whether the skill uses it as-is or regenerates it)
-  - Generates infrastructure *around* code that already exists
-- **Python Function App → Azure Functions (starting point: just your prompt — no source code yet):**
-  - There is no function code in your workspace. The skill reads your prompt (HTTP POST trigger, JSON array of LEGO sets, batch-upsert to Cosmos DB) and **fetches a suitable Azure Functions Python template**
-  - Modifies that template to fit your scenario: rewrites the handler to accept the LEGO JSON shape, maps `set_number → id`, wires it to the existing Cosmos DB database/container, and adds the user-assigned managed identity binding
-  - Picks **Flex Consumption (FC1)** as the hosting plan and adds a Storage account for the deployment package
-  - Generates infrastructure *and* the source code, from a template
-- **Shared across both services:**
-  - Produces a single `azure.yaml` that declares both services and Bicep templates in `infra/` (typically `main.bicep` plus per-service modules)
-  - Creates an AZD environment and sets your subscription + region
+- **Flask app → Container Apps (ponto de partida: codigo fonte existente no workspace):**
+  - Escaneia o workspace — encontra `requirements.txt` e `app.py`, e classifica como app web Python Flask
+  - Escolhe Container Apps como alvo de hospedagem (voce concorda com essa escolha em vez de App Service ou Functions?)
+  - Revisa o `Dockerfile` existente (o app ja tem um — observe se a skill reutiliza como esta ou regenera)
+  - Gera infraestrutura *ao redor* de codigo que ja existe
+- **Python Function App → Azure Functions (ponto de partida: apenas seu prompt — sem codigo ainda):**
+  - Nao existe codigo de function no workspace. A skill le seu prompt (trigger HTTP POST, array JSON de conjuntos LEGO, batch-upsert no Cosmos DB) e **busca um template Python adequado de Azure Functions**
+  - Modifica o template para seu cenario: reescreve o handler para aceitar o formato JSON do LEGO, mapeia `set_number → id`, conecta ao database/container do Cosmos DB existente e adiciona binding com user-assigned managed identity
+  - Escolhe **Flex Consumption (FC1)** como plano de hospedagem e adiciona uma Storage account para o pacote de deployment
+  - Gera infraestrutura *e* codigo fonte, a partir de template
+- **Compartilhado entre os dois servicos:**
+  - Produz um unico `azure.yaml` declarando ambos os servicos e templates Bicep em `infra/` (normalmente `main.bicep` mais modulos por servico)
+  - Cria um ambiente AZD e define sua subscription + regiao
 
-> 💡 **Skill spotlight:** `azure-prepare` doesn't just generate files — it reads skill references for your language runtime, Bicep patterns, AZD conventions, and the Azure Functions Flex Consumption template. Open the generated files: the Bicep in `infra/` and the new `function_app.py` came from skill reference templates, not generic boilerplate.
+> 💡 **Destaque da skill:** `azure-prepare` nao apenas gera arquivos — ele le referencias da skill para runtime da linguagem, padroes Bicep, convencoes AZD e template de Azure Functions Flex Consumption. Abra os arquivos gerados: o Bicep em `infra/` e o novo `function_app.py` vieram de templates de referencia da skill, nao de boilerplate generico.
 
-### 2️⃣ `azure-validate` activates next
+### 2️⃣ `azure-validate` ativa em seguida
 
-It runs pre-flight checks across both services:
-- Compiles Bicep (`az bicep build`) for the Container App and the Function App modules — catches syntax errors before deployment
-- Verifies Docker is running — the Container App image build will fail without it
-- Verifies the Python runtime version and that Flex Consumption (FC1) is available in your selected region — Functions deployment fails fast otherwise
-- Confirms your subscription access and that the resource group name isn't taken
+Ela executa verificacoes pre-flight nos dois servicos:
+- Compila Bicep (`az bicep build`) para os modulos de Container App e Function App — captura erros de sintaxe antes do deployment
+- Verifica se o Docker esta rodando — o build da imagem do Container App falha sem ele
+- Verifica a versao do runtime Python e se Flex Consumption (FC1) esta disponivel na regiao selecionada — deployment de Functions falha rapidamente caso contrario
+- Confirma seu acesso a subscription e que o nome do resource group nao esta em uso
 
-### 3️⃣ `azure-deploy` activates last
+### 3️⃣ `azure-deploy` ativa por ultimo
 
-It runs `azd up --no-prompt`, which provisions and deploys both services in one orchestrated run:
-- **Container App side:** Provisions ACR, Container Apps Environment, Log Analytics, and the Container App; builds your Docker image and pushes it to ACR
-- **Function App side:** Provisions the Storage account, Flex Consumption (FC1) plan, user-assigned managed identity, Application Insights, and the Function App; packages and deploys the Python function code
-- Wires Cosmos DB environment variables into both services and returns live HTTPS endpoints (a Container Apps URL for the Flask UI, and a Functions URL for the ingest endpoint)
+Ela executa `azd up --no-prompt`, que provisiona e publica os dois servicos em uma execucao orquestrada:
+- **Lado Container App:** Provisiona ACR, Container Apps Environment, Log Analytics e o Container App; faz build da imagem Docker e publica no ACR
+- **Lado Function App:** Provisiona Storage account, plano Flex Consumption (FC1), user-assigned managed identity, Application Insights e Function App; empacota e publica o codigo Python da function
+- Configura variaveis de ambiente do Cosmos DB nos dois servicos e retorna endpoints HTTPS ativos (URL do Container Apps para a UI Flask e URL do Functions para o endpoint de ingestao)
 
-### Verify it works
+### Verifique se funcionou
 
 ```bash
 curl <your-endpoint-url>
 ```
 
-> 💡 **Finding your endpoint URL:** If the URL scrolled off screen, run `azd env get-values` or ask Copilot: "What's the URL for my Container App?" The URL looks like `https://<app-name>.<region>.azurecontainerapps.io`.
+> 💡 **Encontrando a URL do endpoint:** Se a URL saiu da tela, execute `azd env get-values` ou pergunte ao Copilot: "What's the URL for my Container App?". A URL parece com `https://<app-name>.<region>.azurecontainerapps.io`.
 
-> 💡 **First request may be slow:** The first request after deploy can take 10-15 seconds while the new revision activates. This is normal — retry after a moment.
+> 💡 **Primeira requisicao pode ser lenta:** A primeira requisicao apos o deployment pode levar 10-15 segundos enquanto a nova revisao ativa. Isso e normal — tente novamente depois de um instante.
 
-> ⚠️ **Cosmos DB access from Container App:** After deployment, the Container App needs permission to access Cosmos DB. If you see errors in the app related to database access, this is expected — you'll address this in Part B (Harden It) by configuring managed identity with the appropriate Cosmos DB RBAC role.
+> ⚠️ **Acesso ao Cosmos DB pelo Container App:** Apos o deployment, o Container App precisa de permissao para acessar o Cosmos DB. Se voce vir erros de acesso a banco de dados, isso e esperado — voce vai resolver na Parte B (Fortalecer) configurando managed identity com o papel RBAC apropriado do Cosmos DB.
 
-**End state:** A live HTTPS endpoint serving the LEGO set browser. Three skills, one prompt. But it's deployed, not production-ready.
+**Estado final:** Endpoint HTTPS ativo servindo o navegador de conjuntos LEGO. Tres skills, um prompt. Publicado, mas ainda nao pronto para producao.
 
-![LEGO Vault app running in the browser](images/workingApp.png)
+![LEGO Vault app em execucao no navegador](images/workingApp.png)
 
-> 📁 **What files were created?** After Part A, your `lego-app` directory should now contain new files generated by `azure-prepare`: typically `azure.yaml` and an `infra/` folder with Bicep templates (e.g., `main.bicep`, `main.parameters.json`, and supporting modules). The existing `Dockerfile` may have been kept as-is or updated. The exact file structure may vary slightly depending on how the AI scaffolded your project.
+> 📁 **Quais arquivos foram criados?** Apos a Parte A, seu diretorio `lego-app` deve conter novos arquivos gerados por `azure-prepare`: tipicamente `azure.yaml` e uma pasta `infra/` com templates Bicep (por exemplo, `main.bicep`, `main.parameters.json` e modulos de suporte). O `Dockerfile` existente pode ter sido mantido como estava ou atualizado. A estrutura exata pode variar um pouco conforme a IA montou seu projeto.
 
 ---
 
-## Part B — Harden It (~10 min)
+## Parte B — Fortalecer (~10 min)
 
-> ⚠️ **Permissions note:** Some hardening operations (e.g., creating role assignments for managed identity) may require **Owner** or **User Access Administrator** role on the subscription. If you encounter permission errors during this step, that's expected in some lab environments — focus on understanding the pattern and reviewing the AI's recommendations rather than executing every command.
+> ⚠️ **Observacao sobre permissoes:** Algumas operacoes de hardening (por exemplo, criar role assignments para managed identity) podem exigir papel **Owner** ou **User Access Administrator** na subscription. Se voce encontrar erros de permissao neste passo, isso e esperado em alguns ambientes de lab — foque em entender o padrao e revisar as recomendacoes da IA, em vez de executar cada comando.
 
-Review the generated Bicep files in your `infra/` directory. Depending on how `azure-prepare` ran, it may have already applied some security hardening during generation. Your job is to **audit what the AI did and didn't do**.
+Revise os arquivos Bicep gerados no diretorio `infra/`. Dependendo de como o `azure-prepare` executou, ele pode ja ter aplicado parte do hardening de seguranca durante a geracao. Seu trabalho e **auditar o que a IA fez e o que nao fez**.
 
-**Say to Copilot:**
+**Diga ao Copilot:**
 
 ```
 Review my deployed Container App infrastructure for production readiness gaps. Check for managed identity, Cosmos DB RBAC access (instead of keys), VNet integration, diagnostic settings, and health probes.
 ```
 
-### What to look for
+### O que observar
 
-| Gap | Why It Matters | Severity |
+| Lacuna | Por que importa | Severidade |
 |---|---|---|
-| **No managed identity for ACR pull** | Container App uses admin credentials to pull images. Security finding. | High |
-| **No managed identity for Cosmos DB** | App uses connection keys instead of RBAC. Keys can leak. | High |
-| **No VNet integration** | Container Apps Environment is on a public network. No isolation. | Medium |
-| **No diagnostic settings** | Platform metrics aren't forwarded. You'd miss CPU/memory alerts. | Medium |
-| **No health probe configured** | Defaults to TCP probes. Your app has a home route — it should use it. | Low |
+| **Sem managed identity para pull no ACR** | Container App usa credenciais de admin para puxar imagens. Achado de seguranca. | Alta |
+| **Sem managed identity para Cosmos DB** | App usa chaves de conexao em vez de RBAC. Chaves podem vazar. | Alta |
+| **Sem integracao com VNet** | Container Apps Environment esta em rede publica. Sem isolamento. | Media |
+| **Sem diagnostic settings** | Metricas da plataforma nao sao encaminhadas. Voce perderia alertas de CPU/memoria. | Media |
+| **Sem health probe configurado** | O padrao usa probe TCP. Seu app tem rota home — deveria usa-la. | Baixa |
 
-> 💡 **The AI may have already hardened some of these.** The `azure-prepare` skill includes a security hardening phase that can set up managed identity and RBAC during initial generation. If you find managed identity and AcrPull are already configured — great, that's the skill working as designed. Focus your review on what's still missing, especially Cosmos DB access via managed identity.
+> 💡 **A IA pode ja ter fortalecido parte disso.** A skill `azure-prepare` inclui uma fase de hardening que pode configurar managed identity e RBAC durante a geracao inicial. Se voce encontrar managed identity e AcrPull ja configurados — otimo, isso e a skill funcionando como esperado. Foque no que ainda esta faltando, principalmente acesso ao Cosmos DB via managed identity.
 
-✅ **Checkpoint:** You've audited the generated infrastructure and either confirmed the AI hardened it or found the next steps. The Container App should now have managed identity configured for both ACR image pulls and Cosmos DB data access.
+✅ **Checkpoint:** Voce auditou a infraestrutura gerada e confirmou se a IA fortaleceu o ambiente ou identificou proximos passos. O Container App deve estar com managed identity configurada tanto para pull de imagem no ACR quanto para acesso a dados no Cosmos DB.
 
-**Takeaway:** The AI may build a secure deployment out of the box — or it may not. The skill's security hardening phase is non-deterministic, which is exactly why human review matters. Whether the AI did the hardening or you prompted it, the critical skill is knowing what "production-ready" looks like and verifying it.
+**Aprendizado:** A IA pode gerar um deployment seguro de primeira — ou nao. A fase de hardening da skill e nao deterministica, e exatamente por isso que revisao humana importa. Seja a IA fazendo hardening ou voce guiando por prompt, a habilidade critica e saber como e um ambiente "pronto para producao" e verificar isso.
 
 ---
 
-**Next:** [Scenario 2 — See It & Evaluate It →](05-scenario-2-see-and-evaluate.md)
+**Proximo:** [Cenario 2 — Visualizar e Avaliar →](05-scenario-2-see-and-evaluate.md)

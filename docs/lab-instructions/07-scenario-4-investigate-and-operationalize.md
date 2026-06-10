@@ -1,68 +1,68 @@
-# Scenario 4 — Investigate It & Operationalize It (~15 min)
+# Cenario 4 — Investigar e Operacionalizar (~15 min)
 
-The incident is resolved. Now: "How long was it down? How do we prevent it next time?"
+O incidente foi resolvido. Agora: "quanto tempo ficou fora?" e "como evitamos na proxima vez?"
 
-> ⏱️ **Log ingestion latency:** Container App system logs take ~5 minutes to appear in Log Analytics. If you completed Scenario 3 quickly, the data should be available by now — if not, wait a minute and retry.
+> ⏱️ **Latencia de ingestao de logs:** Logs de sistema do Container App podem levar ~5 minutos para aparecer no Log Analytics. Se voce concluiu o Cenario 3 rapidamente, os dados ja devem estar disponiveis — se nao, aguarde um minuto e tente novamente.
 
-## Part A — Post-Mortem via KQL (~7 min)
+## Parte A — Post-mortem via KQL (~7 min)
 
-**Say to Copilot:**
+**Diga ao Copilot:**
 
 ```
 Query the Log Analytics workspace for my Container App. Show me what happened during the port mismatch incident.
 ```
 
-### 7️⃣ `azure-diagnostics` activates
+### 7️⃣ `azure-diagnostics` ativa
 
-Watch how it builds the investigation:
+Observe como ela monta a investigacao:
 
-1. **Workspace discovery** — locates your Log Analytics workspace from the resource group
-2. **Table exploration** — queries `ContainerAppSystemLogs_CL` to find available event types
-3. **Event distribution** — runs a KQL `summarize count() by Reason_s` to show the breakdown: ProbeFailed events (from the startup probe failing on the wrong port), ReplicaUnhealthy impact, RevisionUpdate recovery
-4. **Incident timeline** — writes a KQL query with `earliest(TimeGenerated)` and `latest(TimeGenerated)` to calculate exact downtime duration
-5. **Recovery confirmation** — checks for `RevisionReady` events to prove the fix worked
+1. **Descoberta do workspace** — localiza seu Log Analytics workspace a partir do resource group
+2. **Exploracao de tabelas** — consulta `ContainerAppSystemLogs_CL` para encontrar tipos de evento disponiveis
+3. **Distribuicao de eventos** — executa KQL `summarize count() by Reason_s` para mostrar o resumo: eventos ProbeFailed (startup probe falhando por porta errada), impacto ReplicaUnhealthy, recuperacao RevisionUpdate
+4. **Linha do tempo do incidente** — escreve consulta KQL com `earliest(TimeGenerated)` e `latest(TimeGenerated)` para calcular duracao exata da indisponibilidade
+5. **Confirmacao de recuperacao** — verifica eventos `RevisionReady` para provar que a correcao funcionou
 
-> 💡 **Skill spotlight:** `azure-diagnostics` writes KQL *for you* based on natural language. Review the generated queries — would you have written them differently? The skill uses `has` instead of `==` for string matching in KQL, which is more resilient to log format changes.
+> 💡 **Destaque da skill:** `azure-diagnostics` escreve KQL *para voce* com base em linguagem natural. Revise as consultas geradas — voce as escreveria de forma diferente? A skill usa `has` em vez de `==` para comparacao de strings em KQL, o que e mais resiliente a mudancas no formato dos logs.
 
-**Review the KQL the AI wrote.** Copy a query and modify it — try adding a `| where TimeGenerated > ago(1h)` filter or changing the `summarize` to include `bin(TimeGenerated, 5m)` for a time-series view. Run modified queries in the Copilot CLI or paste them into the Azure Portal's Log Analytics query editor.
+**Revise o KQL que a IA escreveu.** Copie uma consulta e modifique — tente adicionar `| where TimeGenerated > ago(1h)` ou trocar o `summarize` para incluir `bin(TimeGenerated, 5m)` e ver em serie temporal. Execute as consultas alteradas no Copilot CLI ou cole no editor de consultas do Log Analytics no Azure Portal.
 
-✅ **Checkpoint:** You've seen KQL queries showing the ProbeFailed events (caused by the port mismatch), the incident timeline, and the recovery confirmation.
+✅ **Checkpoint:** Voce viu consultas KQL mostrando eventos ProbeFailed (causados pela divergencia de porta), linha do tempo do incidente e confirmacao de recuperacao.
 
 ---
 
-## Part B — Operationalize It (~8 min)
+## Parte B — Operacionalizar (~8 min)
 
-> ⚠️ **Note:** The steps below may fail in some lab environments due to existing policy constraints. Try them anyway — if they succeed, you'll have a working alert rule. If they fail, focus on understanding the KQL and alert configuration pattern.
+> ⚠️ **Nota:** Os passos abaixo podem falhar em alguns ambientes de lab por restricoes de politica existentes. Tente assim mesmo — se funcionar, voce tera uma regra de alerta ativa. Se falhar, foque em entender o padrao de KQL e da configuracao do alerta.
 
-**Say to Copilot:**
+**Diga ao Copilot:**
 
 ```
 Create a KQL alert rule that fires when ProbeFailed events appear in the Container App system logs.
 ```
 
-### `azure-diagnostics` continues
+### `azure-diagnostics` continua
 
-It:
-- Writes the alert KQL query targeting `ContainerAppSystemLogs_CL`
-- Generates the full `az monitor scheduled-query create` command with threshold, frequency, severity, and action group
-- Explains each parameter so you can tune it (e.g., evaluation frequency, number of violations before firing)
+Ela:
+- Escreve a consulta KQL do alerta direcionando `ContainerAppSystemLogs_CL`
+- Gera o comando completo `az monitor scheduled-query create` com limite, frequencia, severidade e action group
+- Explica cada parametro para ajuste (por exemplo, frequencia de avaliacao, numero de violacoes antes de disparar)
 
-> ⚠️ **Prerequisite:** The `scheduled-query` CLI extension must be installed: `az extension add --name scheduled-query --yes`
+> ⚠️ **Pre-requisito:** A extensao `scheduled-query` do Azure CLI precisa estar instalada: `az extension add --name scheduled-query --yes`
 
-**Then ask:**
+**Depois, pergunte:**
 
 ```
 What other alert rules should I have for a production Container App backed by Cosmos DB?
 ```
 
-The AI suggests: replica health, restart loops, high latency, 5xx spikes, memory utilization, Cosmos DB request unit consumption, and throttling (429s) — each with the KQL pattern you'd need.
+A IA sugere: saude de replicas, loops de restart, alta latencia, picos de 5xx, uso de memoria, consumo de RUs do Cosmos DB e throttling (429) — cada um com o padrao KQL necessario.
 
-✅ **Checkpoint:** `az monitor scheduled-query list -g <rg> -o table` shows your alert rule.
+✅ **Checkpoint:** `az monitor scheduled-query list -g <rg> -o table` mostra sua regra de alerta.
 
-**Takeaway:** Two prompts, one skill (`azure-diagnostics`), and you went from "the incident is over" to "this class of incident will page me next time." The real 300-level value: you can now read and modify these KQL queries yourself.
+**Aprendizado:** Dois prompts, uma skill (`azure-diagnostics`), e voce saiu de "incidente encerrado" para "esta classe de incidente vai me alertar na proxima vez". O valor nivel 300: agora voce consegue ler e modificar essas consultas KQL sozinho.
 
-> 💡 **Tip:** The `--condition` parameter for `az monitor scheduled-query create` uses a specific DSL format, not raw KQL. The condition references the table name from your KQL query (e.g., `ContainerAppSystemLogs_CL`), while the full KQL goes in `--condition-query`. If the command fails, check that these two parameters are consistent.
+> 💡 **Dica:** O parametro `--condition` em `az monitor scheduled-query create` usa um formato DSL especifico, nao KQL puro. A condicao referencia o nome da tabela da consulta KQL (por exemplo, `ContainerAppSystemLogs_CL`), enquanto a consulta completa vai em `--condition-query`. Se o comando falhar, confira se esses dois parametros estao consistentes.
 
 ---
 
-**Next:** [Troubleshooting →](08-troubleshooting.md)
+**Proximo:** [Solucao de Problemas →](08-troubleshooting.md)

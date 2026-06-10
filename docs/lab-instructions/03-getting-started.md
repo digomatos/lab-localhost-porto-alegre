@@ -1,10 +1,10 @@
-# Getting Started — Set Up the Starter App
+# Primeiros passos — Configure o App Inicial
 
-Set up the starter app using the following instructions.
+Configure o app inicial usando as instrucoes abaixo.
 
-## 1. Clone the Lab Repository
+## 1. Clone o repositorio do lab
 
-Open a new PowerShell session, clone the lab repo, and navigate into it:
+Abra uma nova sessao PowerShell, clone o repositorio do lab e navegue ate ele:
 
 ```powershell
 git clone https://github.com/microsoft/Build26-LAB501.git
@@ -13,9 +13,9 @@ git clone https://github.com/microsoft/Build26-LAB501.git
 cd Build26-LAB501
 ```
 
-## 2. Copy the Starter App
+## 2. Copie o app inicial
 
-The `src/` directory contains a ready-to-go Python Flask application — a LEGO set browser backed by Azure Cosmos DB. Copy it to a new `lego-set-browser` working directory and initialize it as its own Git repo:
+O diretorio `src/` contem uma aplicacao Python Flask pronta para uso — um navegador de conjuntos LEGO com dados no Azure Cosmos DB. Copie para um novo diretorio de trabalho `lego-set-browser` e inicialize como um repositorio Git proprio:
 
 ```powershell
 Copy-Item -Recurse src lego-set-browser
@@ -24,10 +24,10 @@ Copy-Item -Recurse src lego-set-browser
 cd lego-set-browser
 ```
 ```powershell
-git config --global user.name "Your Name"
+git config --global user.name "Seu Nome"
 ```
 ```powershell
-git config --global user.email "you@example.com"
+git config --global user.email "voce@exemplo.com"
 ```
 ```powershell
 git init
@@ -38,16 +38,16 @@ git add -A
 ```powershell
 git commit -m "init"
 ```
-If you run into an issue, please try typing out the command and run one command at a time. 
+Se voce encontrar algum problema, tente digitar os comandos manualmente e execute um comando por vez.
 
-All subsequent commands should be run from the `lego-set-browser` directory.
+Todos os comandos seguintes devem ser executados a partir do diretorio `lego-set-browser`.
 
-> 💡 **What's in the starter app?** `app.py` is a Flask web application with routes for browsing, searching, and viewing LEGO sets. It connects to an Azure Cosmos DB to query set data. `requirements.txt` defines the Python dependencies (Flask, azure-cosmos, azure-identity, gunicorn). A `Dockerfile` is included for containerized deployment. The app uses `DefaultAzureCredential` for passwordless authentication to Cosmos DB.
+> 💡 **O que existe no app inicial?** `app.py` e uma aplicacao web Flask com rotas para navegar, pesquisar e visualizar conjuntos LEGO. Ela se conecta ao Azure Cosmos DB para consultar dados dos conjuntos. `requirements.txt` define as dependencias Python (Flask, azure-cosmos, azure-identity, gunicorn). Um `Dockerfile` esta incluido para deployment em container. O app usa `DefaultAzureCredential` para autenticacao sem senha no Cosmos DB.
 
-## 3. Local Testing
+## 3. Teste local
 
-We will intentionally skip local testing during the onsite labs to allow more time to finish the lab.
+Vamos pular intencionalmente os testes locais durante os labs presenciais para ter mais tempo de concluir o lab.
 
 ---
 
-**Next:** [Scenario 1 — Ship It & Harden It →](04-scenario-1-ship-and-harden.md)
+**Proximo:** [Cenario 1 — Publicar e Fortalecer →](04-scenario-1-ship-and-harden.md)

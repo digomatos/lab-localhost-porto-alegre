@@ -1,88 +1,87 @@
-# Before You Begin — Login & Launch
+# Antes de comecar — Login e Inicializacao
 
-## 1. Log in to Azure
+## 1. Faca login no Azure
 
-Open a terminal — use the shortcut (Ctrl + Shift + 4) to open PowerShell — and complete these steps.
+Abra um terminal — use o atalho (Ctrl + Shift + 4) para abrir o PowerShell — e conclua estes passos.
 
 ```bash
 az login
 ```
 
-When the sign-in pop-up shows up, select **Work or school account** and select **Continue**. Input the username found in the **Resources** tab of your Skillable VM by clicking on the keyboard icon and select **Next**. Then, input the TAP found in the same tab by clicking on the keyboard icon to complete sign-in. On the **Sign in to all apps and websites on this device?** dialog, click **Yes**.
+Quando o pop-up de login aparecer, selecione **Work or school account** e clique em **Continue**. Informe o usuario encontrado na aba **Resources** da sua VM Skillable clicando no icone de teclado e selecione **Next**. Depois, informe o TAP encontrado na mesma aba clicando no icone de teclado para concluir o login. No dialogo **Sign in to all apps and websites on this device?**, clique em **Yes**.
 
-When the terminal prompts you for subscription selection, hit **Enter** for no changes.
+Quando o terminal pedir a selecao da subscription, pressione **Enter** para nao alterar.
 
-> ⚠️ **Do NOT select "Microsoft account" (personal/consumer).** The login page may show multiple options — always select **Work or school account**. Selecting the wrong option will result in access-denied errors.
+> ⚠️ **NAO selecione "Microsoft account" (pessoal/consumidor).** A pagina de login pode mostrar multiplas opcoes — selecione sempre **Work or school account**. Escolher a opcao errada resulta em erros de acesso negado.
 
-## 2. Log in to Azure Developer CLI
+## 2. Faca login no Azure Developer CLI
 
 ```bash
 azd auth login
 ```
 
-Select the Azure account from the previous step and complete authentication.
+Selecione a conta Azure do passo anterior e conclua a autenticacao.
 
-## 3. Log in to GitHub
+## 3. Faca login no GitHub
 
-Open this link in the browser: <a href="https://github.com/enterprises/skillable-events/sso" target="_blank" rel="noopener noreferrer">https://github.com/enterprises/skillable-events/sso</a>. Select **Continue** when prompted to single sign-on to Skillable Events. Select the Azure account you just authenticated to. Follow the prompts to complete authentication.
+Abra este link no navegador: <a href="https://github.com/enterprises/skillable-events/sso" target="_blank" rel="noopener noreferrer">https://github.com/enterprises/skillable-events/sso</a>. Selecione **Continue** quando solicitado para single sign-on no Skillable Events. Selecione a conta Azure que voce acabou de autenticar. Siga os prompts para concluir a autenticacao.
 
-## 4. Log in to GitHub Copilot CLI
+## 4. Faca login no GitHub Copilot CLI
 
-Enter the following command to start GitHub Copilot CLI:
+Digite o comando abaixo para iniciar o GitHub Copilot CLI:
 
 ```bash
 copilot
 ```
 
-This opens the interactive Copilot CLI session. All "Say to Copilot" prompts in this lab are typed here. **Keep this session open for the rest of the lab** — this is where you'll interact with AI skills.
+Isso abre a sessao interativa do Copilot CLI. Todos os prompts "Say to Copilot" deste lab sao digitados aqui. **Mantenha esta sessao aberta durante todo o lab** — e aqui que voce interage com as skills de IA.
 
-> 💡 **Terminal vs. Copilot:** Throughout this lab, you'll run commands in two places. **Copilot CLI** is for AI-driven prompts (e.g., "Deploy my app to Azure"). **Terminal commands** (prefixed with `!` in Copilot) are for shell operations like `curl`, `az`, and `git`. When in doubt, you can run any terminal command inside Copilot by prefixing it with `!`.
+> 💡 **Terminal vs. Copilot:** Durante este lab, voce vai executar comandos em dois lugares. O **Copilot CLI** e para prompts orientados por IA (por exemplo, "Deploy my app to Azure"). **Comandos de terminal** (prefixados com `!` no Copilot) sao para operacoes de shell como `curl`, `az` e `git`. Em caso de duvida, voce pode executar qualquer comando de terminal dentro do Copilot prefixando com `!`.
 
 ```bash
 /login
 ```
 
-When prompted what account do you want to log into, select GitHub.com. Copilot will prompt you to enter any key to open a browser to complete login. Follow the instructions in Copilot to complete authorization using the signed-in account.
+Quando for perguntado em qual conta fazer login, selecione GitHub.com. O Copilot pedira para voce pressionar qualquer tecla para abrir o navegador e concluir o login. Siga as instrucoes no Copilot para concluir a autorizacao usando a conta autenticada.
 
-## 5. Disable Rubberduck Agent
+## 5. Desabilite o agente Rubberduck
 
-Use the following prompt in copilot to disable rubberduck agent in Copilot CLI as it's not needed for the lab session: 
+Use o prompt abaixo no Copilot para desabilitar o agente rubberduck no Copilot CLI, pois ele nao e necessario para esta sessao de lab:
 
 Say to Copilot
 ```
  Update the settings.json for Copilot CLI to disable rubber duck with this, "builtInAgents": {"rubberDuck": false},
-```    
+```
 
-![Disabling the Rubber Duck agent in Copilot CLI](images/disablingRubberDuck.png)
+![Desabilitando o agente Rubber Duck no Copilot CLI](images/disablingRubberDuck.png)
 
+## 6. Instale o Azure Skills Plugin
 
-## 6. Install the Azure Skills Plugin
-
-1. Add the Microsoft marketplace:
+1. Adicione o marketplace Microsoft:
    ```
    /plugin marketplace add microsoft/azure-skills
    ```
 
-2. Install the Azure plugin:
+2. Instale o plugin Azure:
    ```
    /plugin install azure@azure-skills
    ```
 
-3. Reload Azure MCP:
+3. Recarregue o Azure MCP:
    ```
    /mcp reload
    ```
-4. **CLOSE YOUR TERMINAL** so that the changes to the copilot settings can be picked up when you next open copilot.  
+4. **FECHE O TERMINAL** para que as alteracoes nas configuracoes do Copilot sejam carregadas na proxima vez que voce abrir o Copilot.
 
-> 💡 **MCP tools vs. Azure skills:** The Azure MCP server provides **MCP tools** — low-level operations like listing resources, querying logs, and managing deployments. Azure **skills** are higher-level prompt instructions that chain these tools together with domain knowledge (e.g., `azure-diagnostics` knows how to follow a triage reasoning chain). This lab uses both: skills drive the workflow, MCP tools execute the Azure operations.
+> 💡 **MCP tools vs. Azure skills:** O Azure MCP server fornece **MCP tools** — operacoes de baixo nivel como listar recursos, consultar logs e gerenciar deployments. As **skills** do Azure sao instrucoes de nivel mais alto que encadeiam essas ferramentas com conhecimento de dominio (por exemplo, `azure-diagnostics` sabe seguir uma cadeia de raciocinio de triagem). Este lab usa ambos: as skills conduzem o fluxo, e os MCP tools executam as operacoes no Azure.
 
-> 💡 **Tip:** To update the plugin later, run:
+> 💡 **Dica:** Para atualizar o plugin depois, execute:
 > ```
 > /plugin update azure@azure-skills
 > ```
 
-✅ **Checkpoint:** You're logged into GitHub and Azure, Copilot CLI is running, Azure skills and Azure MCP Server are installed.
+✅ **Checkpoint:** Voce esta autenticado no GitHub e no Azure, o Copilot CLI esta em execucao e as skills do Azure e o Azure MCP Server estao instalados.
 
 ---
 
-**Next:** [Set Up the Starter App →](03-getting-started.md)
+**Proximo:** [Configurar o App Inicial →](03-getting-started.md)

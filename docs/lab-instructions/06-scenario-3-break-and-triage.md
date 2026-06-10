@@ -1,57 +1,57 @@
-# Scenario 3 — Break It & Triage It (~10 min)
+# Cenario 3 — Quebrar e Triar (~10 min)
 
-It's 2 AM. Your app returns 503. You open a terminal. Pay attention to the AI's diagnostic reasoning chain, not just the answer.
+Sao 2 da manha. Seu app retorna 503. Voce abre o terminal. Preste atencao na cadeia de raciocinio diagnostico da IA, nao apenas na resposta.
 
-## Introduce the Failure
+## Introduza a falha
 
-Replace `<app>` and `<rg>` with your actual Container App name and resource group from Scenario 1A (run `azd env get-values` if you need to find them). Then, in a new powershell tab, run the following command:
+Substitua `<app>` e `<rg>` pelo nome real do seu Container App e pelo resource group do Cenario 1A (execute `azd env get-values` se precisar localizar). Em seguida, em uma nova aba do PowerShell, execute:
 
 ```powershell
 az containerapp ingress update --name <app> -g <rg> --target-port 9999
 ```
 
-> ⏱️ **This command takes ~30 seconds to 2 minutes** while the new Container Apps revision activates. This is expected — don't Ctrl+C.
+> ⏱️ **Este comando leva ~30 segundos a 2 minutos** enquanto a nova revisao do Container Apps ativa. Isso e esperado — nao use Ctrl+C.
 
-Hit the endpoint — you'll get `503 Service Unavailable`.
+Acesse o endpoint — voce recebera `503 Service Unavailable`.
 
 ---
 
-## Diagnose with AI
+## Diagnostique com IA
 
-**Say to Copilot:**
+**Diga ao Copilot:**
 
 ```
 My Container App is returning 503. What's wrong?
 ```
 
-### 6️⃣ `azure-diagnostics` activates
+### 6️⃣ `azure-diagnostics` ativa
 
-Watch the triage chain:
+Observe a cadeia de triagem:
 
-1. **Hypothesis formation** — the skill considers multiple failure modes: app crash? ingress misconfiguration? bad image? unhealthy environment?
-2. **Log retrieval** — pulls Container App system logs using `az containerapp logs show --type system`
-3. **Log correlation** — finds `Reason: ProbeFailed` — *"Probe of StartUp failed with status code: 1"* (the startup probe fails because the container isn't listening on port 9999)
-4. **Config verification** — cross-references ingress config (port 9999) against the container's listening port (8000, as set by gunicorn in the Dockerfile)
-5. **Root cause + fix** — delivers the exact CLI command to restore the correct port
+1. **Formacao de hipoteses** — a skill considera varios modos de falha: crash da app? erro de ingress? imagem ruim? ambiente unhealthy?
+2. **Coleta de logs** — busca logs de sistema do Container App com `az containerapp logs show --type system`
+3. **Correlacao de logs** — encontra `Reason: ProbeFailed` — *"Probe of StartUp failed with status code: 1"* (a startup probe falha porque o container nao esta ouvindo na porta 9999)
+4. **Verificacao de configuracao** — cruza config de ingress (porta 9999) com a porta real da app (8000, definida pelo gunicorn no Dockerfile)
+5. **Causa raiz + correcao** — entrega o comando CLI exato para restaurar a porta correta
 
-> 💡 **Skill spotlight:** `azure-diagnostics` doesn't just search logs for errors — it follows a diagnostic reasoning chain. It starts broad (what could cause 503?), narrows via evidence (system logs show ProbeFailed), and confirms with config data. This is the same triage pattern a senior SRE would follow.
+> 💡 **Destaque da skill:** `azure-diagnostics` nao apenas procura erros em logs — ela segue uma cadeia de raciocinio diagnostico. Comeca amplo (o que pode causar 503?), afunila por evidencia (logs de sistema mostram ProbeFailed) e confirma com dados de configuracao. E o mesmo padrao de triagem que um SRE senior seguiria.
 
 ---
 
-## Apply the Fix
+## Aplique a correcao
 
-Run the suggested fix command. It will be something like:
+Execute o comando de correcao sugerido. Deve ser algo como:
 
 ```powershell
 az containerapp ingress update --name <app> -g <rg> --target-port 8000
 ```
 
-Verify recovery → `200 OK`.
+Verifique a recuperacao → `200 OK`.
 
-✅ **Checkpoint:** `curl <your-endpoint-url>` returns the LEGO set browser HTML again.
+✅ **Checkpoint:** `curl <your-endpoint-url>` volta a retornar o HTML do navegador de conjuntos LEGO.
 
-**Takeaway:** One natural language question → `azure-diagnostics` activated → root cause + fix in ~30 seconds. The skill did the log correlation you'd normally do manually in the portal.
+**Aprendizado:** Uma pergunta em linguagem natural → `azure-diagnostics` ativada → causa raiz + correcao em ~30 segundos. A skill fez a correlacao de logs que voce normalmente faria manualmente no portal.
 
 ---
 
-**Next:** [Scenario 4 — Investigate & Operationalize →](07-scenario-4-investigate-and-operationalize.md)
+**Proximo:** [Cenario 4 — Investigar e Operacionalizar →](07-scenario-4-investigate-and-operationalize.md)

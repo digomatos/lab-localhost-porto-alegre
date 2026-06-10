@@ -1,13 +1,13 @@
-# Prerequisites
+# Pre-requisitos
 
-**Pre-installed on the lab VM for your convenience:**
-- Azure subscription with Contributor access and a **pre-provisioned Cosmos DB** account containing the LEGO dataset
-- GitHub Copilot CLI (see setup below)
+**Pre-instalado na VM do lab para sua conveniencia:**
+- Subscription Azure com acesso de Contributor e uma conta **Cosmos DB pre-provisionada** contendo o dataset LEGO
+- GitHub Copilot CLI (veja configuracao abaixo)
 - [Python 3.13+](https://www.python.org/)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [Git](https://git-scm.com/)
-- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) with Bicep (`az bicep install`)
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) com Bicep (`az bicep install`)
 - [Azure Developer CLI (azd)](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd)
 - Azure MCP Server
 
-**Next:** [Login & Launch →](02-login-and-launch.md)
+**Proximo:** [Login e Inicializacao →](02-login-and-launch.md)

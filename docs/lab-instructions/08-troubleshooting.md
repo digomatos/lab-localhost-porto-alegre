@@ -1,65 +1,65 @@
-# Troubleshooting
+# Solucao de Problemas
 
-## Cosmos DB connection fails locally
-**Symptom:** `python app.py` shows authentication or connection errors.
-**Cause:** The app uses `DefaultAzureCredential`, which requires an active Azure CLI login.
-**Fix:** Run `az login` and ensure you're on the correct subscription. Verify `COSMOS_ENDPOINT` in `.env` matches your provisioned Cosmos DB.
+## Conexao com Cosmos DB falha localmente
+**Sintoma:** `python app.py` mostra erro de autenticacao ou conexao.
+**Causa:** O app usa `DefaultAzureCredential`, que exige login ativo no Azure CLI.
+**Correcao:** Execute `az login` e confirme que esta na subscription correta. Verifique se `COSMOS_ENDPOINT` no `.env` corresponde ao Cosmos DB provisionado.
 
-## ACR name contains hyphens → Deployment fails
-**Symptom:** `azd up` fails with an error about invalid ACR name.
-**Cause:** ACR names must be alphanumeric. Hyphens in your AZD environment name propagate to the registry name.
-**Fix:** Use an environment name without hyphens (e.g., `lab501app`). Re-run `azd init` with a new name.
+## Nome do ACR com hifen → deployment falha
+**Sintoma:** `azd up` falha com erro de nome invalido de ACR.
+**Causa:** Nomes de ACR devem ser alfanumericos. Hifens no nome do ambiente AZD propagam para o nome do registry.
+**Correcao:** Use nome de ambiente sem hifen (exemplo: `lab501app`). Execute `azd init` novamente com novo nome.
 
-## AZD deploys to wrong subscription
-**Symptom:** Resources appear in an unexpected subscription, or you get permission errors.
-**Cause:** AZD maintains its own subscription config, separate from `az account show`.
-**Fix:** Run `azd env set AZURE_SUBSCRIPTION_ID $(az account show --query id -o tsv)` to align.
+## AZD publica na subscription errada
+**Sintoma:** Recursos aparecem em outra subscription, ou voce recebe erro de permissao.
+**Causa:** AZD mantem configuracao propria de subscription, separada de `az account show`.
+**Correcao:** Execute `azd env set AZURE_SUBSCRIPTION_ID $(az account show --query id -o tsv)` para alinhar.
 
-## Container App can't connect to Cosmos DB after deployment
-**Symptom:** The app deploys but shows database errors when accessed.
-**Cause:** The Container App doesn't have the right permissions or environment variables to reach Cosmos DB.
-**Fix:** Verify the `COSMOS_ENDPOINT`, `COSMOS_DATABASE`, and `COSMOS_CONTAINER` environment variables are set on the Container App. If using managed identity, ensure the system-assigned identity has the appropriate Cosmos DB RBAC role assigned.
+## Container App nao conecta ao Cosmos DB apos deployment
+**Sintoma:** O app publica, mas mostra erros de banco ao acessar.
+**Causa:** O Container App nao tem permissoes ou variaveis de ambiente corretas para acessar o Cosmos DB.
+**Correcao:** Verifique se `COSMOS_ENDPOINT`, `COSMOS_DATABASE` e `COSMOS_CONTAINER` estao definidos no Container App. Se usar managed identity, confirme se a identity system-assigned possui o papel RBAC correto no Cosmos DB.
 
-## `az containerapp ingress update` hangs for 2+ minutes
-**Symptom:** The command appears stuck after running.
-**Cause:** The CLI waits for the new Container Apps revision to activate.
-**Fix:** This is expected behavior. Wait for it to complete — do not Ctrl+C.
+## `az containerapp ingress update` trava por mais de 2 minutos
+**Sintoma:** O comando parece preso apos executar.
+**Causa:** O CLI espera a nova revisao do Container Apps ativar.
+**Correcao:** Isso e esperado. Aguarde concluir — nao use Ctrl+C.
 
-## First request after deploy returns timeout or slow response
-**Symptom:** `curl` times out or takes >10 seconds on first request.
-**Cause:** New revision is activating (cold start). `minReplicas: 1` is set, but initial activation still takes time.
-**Fix:** Wait ~15 seconds after deployment completes, then retry.
+## Primeira requisicao apos deployment da timeout ou resposta lenta
+**Sintoma:** `curl` da timeout ou leva mais de 10 segundos na primeira requisicao.
+**Causa:** A nova revisao esta ativando (cold start). `minReplicas: 1` esta configurado, mas a ativacao inicial ainda leva tempo.
+**Correcao:** Aguarde ~15 segundos apos concluir o deployment e tente novamente.
 
-## KQL query returns no results in Scenario 4
-**Symptom:** Queries return empty tables.
-**Cause:** Log Analytics ingestion has ~5 minute latency. Metrics have ~15 minute latency.
-**Fix:** Wait 5 minutes after Scenario 3, then retry the query.
+## Consulta KQL sem resultados no Cenario 4
+**Sintoma:** Consultas retornam tabelas vazias.
+**Causa:** Ingestao no Log Analytics tem latencia de ~5 minutos. Metricas tem latencia de ~15 minutos.
+**Correcao:** Aguarde 5 minutos apos o Cenario 3 e execute novamente.
 
-## `az monitor scheduled-query create` fails with "command not found"
-**Symptom:** CLI doesn't recognize the `scheduled-query` command.
-**Cause:** The preview CLI extension isn't installed.
-**Fix:** Run `az extension add --name scheduled-query --yes`
+## `az monitor scheduled-query create` falha com "command not found"
+**Sintoma:** O CLI nao reconhece o comando `scheduled-query`.
+**Causa:** A extensao preview do CLI nao esta instalada.
+**Correcao:** Execute `az extension add --name scheduled-query --yes`
 
-## Docker build fails during `azd up`
-**Symptom:** Deployment fails with Docker-related error.
-**Cause:** Docker Desktop isn't running.
-**Fix:** Start Docker Desktop and verify with `docker version`. Then re-run `azd up`.
+## Build Docker falha durante `azd up`
+**Sintoma:** Deployment falha com erro relacionado ao Docker.
+**Causa:** Docker Desktop nao esta em execucao.
+**Correcao:** Inicie o Docker Desktop e valide com `docker version`. Depois execute `azd up` novamente.
 
-## Python dependency install fails
-**Symptom:** `pip install -r requirements.txt` fails with errors.
-**Cause:** Missing system dependencies or wrong Python version.
-**Fix:** Verify you're running Python 3.13+ with `python --version`. Try `pip install --upgrade pip` first.
+## Instalacao de dependencias Python falha
+**Sintoma:** `pip install -r requirements.txt` falha com erros.
+**Causa:** Dependencias de sistema ausentes ou versao Python incorreta.
+**Correcao:** Verifique se esta usando Python 3.13+ com `python --version`. Tente `pip install --upgrade pip` antes.
 
-## PowerShell quote escaping in KQL queries
-**Symptom:** KQL `where Reason_s == "ProbeFailed"` fails with syntax errors in PowerShell.
-**Cause:** PowerShell handles double quotes differently than bash.
-**Fix:** Use the `has` operator instead: `where Reason_s has "ProbeFailed"`. The AI typically handles this automatically.
+## Escape de aspas no PowerShell em consultas KQL
+**Sintoma:** KQL `where Reason_s == "ProbeFailed"` falha com erro de sintaxe no PowerShell.
+**Causa:** O PowerShell trata aspas duplas de forma diferente do bash.
+**Correcao:** Use operador `has`: `where Reason_s has "ProbeFailed"`. A IA geralmente lida com isso automaticamente.
 
-## Gunicorn port mismatch after deployment
-**Symptom:** The Container App shows 503 even after a fresh deploy.
-**Cause:** The ingress target port doesn't match gunicorn's bind port (8000).
-**Fix:** Ensure the Container App ingress target port is set to `8000` (matching the `Dockerfile` CMD: `gunicorn --bind 0.0.0.0:8000`).
+## Divergencia de porta do gunicorn apos deployment
+**Sintoma:** O Container App retorna 503 mesmo apos deployment novo.
+**Causa:** A porta alvo do ingress nao corresponde a porta de bind do gunicorn (8000).
+**Correcao:** Garanta que a porta alvo do ingress do Container App esta em `8000` (igual ao CMD do `Dockerfile`: `gunicorn --bind 0.0.0.0:8000`).
 
 ---
 
-**Back to:** [Overview](00-overview.md) | [What's Next →](09-whats-next.md)
+**Voltar para:** [Visao Geral](00-overview.md) | [Proximos Passos →](09-whats-next.md)

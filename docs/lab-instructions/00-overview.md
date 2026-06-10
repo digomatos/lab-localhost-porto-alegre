@@ -1,42 +1,42 @@
-# End-to-End Agentic DevOps with Azure MCP — Ship, Harden, Break, Investigate
+# DevOps Agentico de ponta a ponta com Azure MCP — Publicar, Fortalecer, Quebrar, Investigar
 
-**Hands-On Lab (75 min) | Level: 300 | LAB501**
+**Lab pratico (75 min) | Nivel: 300 | LAB501**
 
-AI can deploy your app to Azure in 5 minutes. But should you trust what it built? In this lab, you'll use GitHub Copilot CLI with Azure skills to deploy a live Container App — a Python Flask application that browses a LEGO set catalog backed by Azure Cosmos DB — along with a Function App that upserts new LEGO sets into Cosmos DB. Then, you'll put on your architect hat and evaluate the AI's decisions. You'll review the generated Bicep files, identify what's missing for production readiness, direct the AI to harden the deployment, intentionally break the app, and run a full forensic investigation — all without opening the Azure Portal.
+A IA pode implantar seu app no Azure em 5 minutos. Mas voce deve confiar no que ela construiu? Neste lab, voce vai usar o GitHub Copilot CLI com skills do Azure para implantar um Container App em producao real — uma aplicacao Python Flask que navega por um catalogo de conjuntos LEGO com dados no Azure Cosmos DB — junto com uma Function App que faz upsert de novos conjuntos LEGO no Cosmos DB. Depois, voce vai colocar o chapeu de arquiteto e avaliar as decisoes da IA. Voce vai revisar os arquivos Bicep gerados, identificar o que falta para prontidao de producao, orientar a IA a fortalecer o deployment, quebrar o app de proposito e executar uma investigacao forense completa — tudo sem abrir o Azure Portal.
 
-> 💡 **AI responses may vary** from what's described in this guide. Focus on which skills activate and the reasoning patterns, not exact output. The prompts are tested, but AI is non-deterministic — your results may look slightly different.
+> 💡 **As respostas da IA podem variar** em relacao ao que esta descrito neste guia. Foque em quais skills ativam e nos padroes de raciocinio, nao na saida exata. Os prompts foram testados, mas IA e nao deterministica — seus resultados podem ficar um pouco diferentes.
 
-### Target Architecture
+### Arquitetura Alvo
 
 ```mermaid
 graph TB
-    User((User<br/>Browser))
-    Admin((Ingest<br/>Client))
+    User((Usuario<br/>Navegador))
+    Admin((Cliente de<br/>Ingestao))
 
     subgraph RG["Resource Group"]
-        subgraph Web["Web Tier"]
+        subgraph Web["Camada Web"]
             ACR["Azure Container Registry"]
             CAE["Container Apps Environment"]
             CA["Container App"]
         end
 
-        subgraph Api["API Tier"]
+        subgraph Api["Camada de API"]
             ASP["App Service Plan"]
             FUNC["Function App"]
             UAMI["User-Assigned Managed Identity"]
         end
 
-        subgraph Storage["Backing Storage"]
+        subgraph Storage["Armazenamento de apoio"]
             ST["Storage Account"]
             BLOB["Blob Container"]
         end
 
-        subgraph Obs["Observability"]
+        subgraph Obs["Observabilidade"]
             LAW["Log Analytics Workspace"]
             AI["Application Insights"]
         end
 
-        subgraph VNetOpt["Optional"]
+        subgraph VNetOpt["Opcional"]
             VNET["Virtual Network"]
             APPSUB["Subnet"]
             PESUB["Subnet"]
@@ -44,44 +44,44 @@ graph TB
         end
     end
 
-    subgraph CosmosRG["External Resource Group"]
+    subgraph CosmosRG["Resource Group Externo"]
         COSMOS["Cosmos DB Account"]
         DB["Cosmos DB Database"]
         CONT["Cosmos DB Container"]
     end
 
-    %% User flows
+    %% Fluxos de usuario
     User ==>|"HTTPS"| CA
     Admin ==>|"HTTPS POST<br/>x-functions-key"| FUNC
 
-    %% Web tier
-    ACR -->|"pull image<br/>(admin creds via secret)"| CA
+    %% Camada web
+    ACR -->|"pull da imagem<br/>(credenciais admin via secret)"| CA
     CA --- CAE
-    CAE -->|"app logs"| LAW
+    CAE -->|"logs do app"| LAW
 
-    %% API tier
+    %% Camada de API
     FUNC --- ASP
-    FUNC -.->|"assigned"| UAMI
+    FUNC -.->|"atribuida"| UAMI
     UAMI -->|"Storage Blob Data Owner<br/>+ Contributor"| ST
     ST --> BLOB
-    BLOB -->|"deployment package"| FUNC
+    BLOB -->|"pacote de deployment"| FUNC
 
-    %% Cosmos data-plane (cross-RG)
-    CA ==>|"SQL queries via SDK<br/>System-MI → Cosmos Data Reader"| COSMOS
+    %% Plano de dados do Cosmos (cross-RG)
+    CA ==>|"consultas SQL via SDK<br/>System-MI → Cosmos Data Reader"| COSMOS
     UAMI ==>|"upsert_item via SDK<br/>UAMI → Cosmos Data Contributor"| COSMOS
     COSMOS --> DB --> CONT
 
-    %% Telemetry
+    %% Telemetria
     CA -.->|"APPLICATIONINSIGHTS_<br/>CONNECTION_STRING"| AI
-    FUNC -.->|"telemetry (Entra auth)"| AI
+    FUNC -.->|"telemetria (Entra auth)"| AI
     AI --- LAW
 
-    %% Optional VNet path
+    %% Caminho opcional de VNet
     VNET --- APPSUB
     VNET --- PESUB
-    FUNC -.->|"VNet integration<br/>(if enabled)"| APPSUB
+    FUNC -.->|"integracao com VNet<br/>(se habilitado)"| APPSUB
     PESUB -.->|"private link"| PE
-    PE -.->|"private access<br/>(if enabled)"| ST
+    PE -.->|"acesso privado<br/>(se habilitado)"| ST
 
     classDef external fill:#fef3c7,stroke:#d97706,stroke-width:2px;
     classDef optional fill:#f3f4f6,stroke:#9ca3af,stroke-dasharray: 5 5;
@@ -91,38 +91,38 @@ graph TB
     class UAMI identity;
 ```
 
-## What You'll Learn
+## O que voce vai aprender
 
-- How Azure **skills** chain together — one prompt can trigger `prepare` → `validate` → `deploy` automatically
-- Where AI-generated infrastructure gets you to 80% — and the production gaps you need to close
-- How to critically review AI-generated Bicep, Dockerfiles, and architecture diagrams
-- How `azure-diagnostics` reasons through problems: triage patterns, log correlation, KQL generation
-- When to trust the AI's decisions and when to override them
-- How to connect a containerized app to a pre-provisioned Azure Cosmos DB using managed identity
+- Como as **skills** do Azure se encadeiam — um prompt pode acionar `prepare` → `validate` → `deploy` automaticamente
+- Onde a infraestrutura gerada por IA te leva a 80% — e quais lacunas de producao voce precisa fechar
+- Como revisar criticamente Bicep, Dockerfiles e diagramas de arquitetura gerados por IA
+- Como `azure-diagnostics` raciocina sobre problemas: padroes de triagem, correlacao de logs, geracao de KQL
+- Quando confiar nas decisoes da IA e quando sobrescreve-las
+- Como conectar um app em container a um Azure Cosmos DB pre-provisionado usando managed identity
 
-## Skills Used — 6 Skills Across 4 Scenarios
+## Skills usadas — 6 skills em 4 cenarios
 
-| # | Skill | What It Does | Scenario |
+| # | Skill | O que faz | Cenario |
 |---|---|---|---|
-| 1 | `azure-prepare` | Handles two starting points in one pass: wraps IaC + config around the existing Flask source code (Container Apps) **and** fetches a Python Azure Functions template and tailors it to the prompt (Flex Consumption) | 1A: Ship |
-| 2 | `azure-validate` | Pre-flight checks: Bicep compilation, Docker status (Container Apps), Python runtime + Flex Consumption availability (Functions), subscription access | 1A: Ship |
-| 3 | `azure-deploy` | Runs `azd up` — provisions infrastructure + builds + deploys both services (Flask Container App and Python Function App) | 1A: Ship |
-| 4 | `azure-rbac` | Finds least-privilege roles from Azure docs, generates assignment commands | 1B: Harden |
-| 5 | `azure-resource-visualizer` | Queries Resource Graph, maps relationships, generates Mermaid diagrams | 2: See |
-| 6 | `azure-diagnostics` | Pulls system logs, follows diagnostic reasoning chain to root cause; writes KQL queries, creates alert rules | 3: Break, 4: Investigate |
+| 1 | `azure-prepare` | Lida com dois pontos de partida em uma passada: envolve o codigo Flask existente com IaC + configuracao (Container Apps) **e** busca um template Python do Azure Functions e o adapta ao prompt (Flex Consumption) | 1A: Publicar |
+| 2 | `azure-validate` | Verificacoes pre-flight: compilacao de Bicep, status do Docker (Container Apps), runtime Python + disponibilidade de Flex Consumption (Functions), acesso a subscription | 1A: Publicar |
+| 3 | `azure-deploy` | Executa `azd up` — provisiona infraestrutura + build + deploy dos dois servicos (Flask Container App e Python Function App) | 1A: Publicar |
+| 4 | `azure-rbac` | Encontra papeis de menor privilegio na documentacao Azure e gera comandos de atribuicao | 1B: Fortalecer |
+| 5 | `azure-resource-visualizer` | Consulta o Resource Graph, mapeia relacoes e gera diagramas Mermaid | 2: Visualizar |
+| 6 | `azure-diagnostics` | Coleta logs do sistema, segue cadeia de raciocinio diagnostico ate a causa raiz; escreve consultas KQL e cria regras de alerta | 3: Quebrar, 4: Investigar |
 
-> 📖 **Glossary:** **ACR** = Azure Container Registry (private Docker image store). **AZD** = Azure Developer CLI (`azd`). **Bicep** = Azure's IaC language. **Cosmos DB** = Azure's globally distributed NoSQL database. **KQL** = Kusto Query Language (for log queries). **MCP** = Model Context Protocol.
+> 📖 **Glossario:** **ACR** = Azure Container Registry (repositorio privado de imagens Docker). **AZD** = Azure Developer CLI (`azd`). **Bicep** = linguagem IaC do Azure. **Cosmos DB** = banco NoSQL globalmente distribuido do Azure. **KQL** = Kusto Query Language (consultas de logs). **MCP** = Model Context Protocol.
 
-## Lab Sections
+## Secoes do lab
 
-| # | Section | File | Duration |
+| # | Secao | Arquivo | Duracao |
 |---|---------|------|----------|
-| 1 | [Prerequisites](01-prerequisites.md) | `01-prerequisites.md` | Pre-session |
-| 2 | [Login & Launch](02-login-and-launch.md) | `02-login-and-launch.md` | ~5 min |
-| 3 | [Set Up the Starter App](03-getting-started.md) | `03-getting-started.md` | ~5 min |
-| 4 | [Scenario 1 — Ship It & Harden It](04-scenario-1-ship-and-harden.md) | `04-scenario-1-ship-and-harden.md` | ~25 min |
-| 5 | [Scenario 2 — See It & Evaluate It](05-scenario-2-see-and-evaluate.md) | `05-scenario-2-see-and-evaluate.md` | ~10 min |
-| 6 | [Scenario 3 — Break It & Triage It](06-scenario-3-break-and-triage.md) | `06-scenario-3-break-and-triage.md` | ~10 min |
-| 7 | [Scenario 4 — Investigate & Operationalize](07-scenario-4-investigate-and-operationalize.md) | `07-scenario-4-investigate-and-operationalize.md` | ~15 min |
-| 8 | [Troubleshooting](08-troubleshooting.md) | `08-troubleshooting.md` | Reference |
-| 9 | [What's Next](09-whats-next.md) | `09-whats-next.md` | Reference |
+| 1 | [Pre-requisitos](01-prerequisites.md) | `01-prerequisites.md` | Pre-sessao |
+| 2 | [Login e Inicializacao](02-login-and-launch.md) | `02-login-and-launch.md` | ~5 min |
+| 3 | [Configurar o App Inicial](03-getting-started.md) | `03-getting-started.md` | ~5 min |
+| 4 | [Cenario 1 — Publicar e Fortalecer](04-scenario-1-ship-and-harden.md) | `04-scenario-1-ship-and-harden.md` | ~25 min |
+| 5 | [Cenario 2 — Visualizar e Avaliar](05-scenario-2-see-and-evaluate.md) | `05-scenario-2-see-and-evaluate.md` | ~10 min |
+| 6 | [Cenario 3 — Quebrar e Triar](06-scenario-3-break-and-triage.md) | `06-scenario-3-break-and-triage.md` | ~10 min |
+| 7 | [Cenario 4 — Investigar e Operacionalizar](07-scenario-4-investigate-and-operationalize.md) | `07-scenario-4-investigate-and-operationalize.md` | ~15 min |
+| 8 | [Solucao de Problemas](08-troubleshooting.md) | `08-troubleshooting.md` | Referencia |
+| 9 | [Proximos Passos](09-whats-next.md) | `09-whats-next.md` | Referencia |
