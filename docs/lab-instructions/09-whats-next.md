@@ -1,10 +1,10 @@
-# Proximos Passos
+# Próximos Passos
 
-Parabens — voce publicou, fortaleceu, quebrou, diagnosticou e operacionalizou um Azure Container App usando 7 skills de IA. Veja para onde ir agora:
+Parabéns — você publicou, fortaleceu, quebrou, diagnosticou e operacionalizou um Azure Container App usando 7 skills de IA. Veja para onde ir agora:
 
-## 🔗 Clone o repositorio do lab
+## 🔗 Clone o repositório do lab
 
-Quer refazer este lab ou compartilhar com colegas? Clone o repositorio base:
+Quer refazer este lab ou compartilhar com colegas? Clone o repositório base:
 
 ```bash
 git clone https://github.com/microsoft/Build26-LAB501.git
@@ -32,4 +32,8 @@ Queremos saber como foi o lab. Compartilhe feedback ou abra uma issue em [github
 
 ---
 
-**Voltar para:** [Visao Geral](00-overview.md)
+**Voltar para:** [Visão Geral](00-overview.md)
+
+
+
+
